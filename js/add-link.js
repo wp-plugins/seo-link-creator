@@ -10,7 +10,7 @@ com.idilia.Link = window.com.idilia.Link || {};
  *****************************************************************************/
 
 com.idilia.Word = function( originalText, lemma, genre, description, thumbnail, sense, link ) {
-	this.originalText = originalText	
+	this.originalText = originalText;
 	this.lemma = lemma;
 	this.genre = genre;
 	this.description = description;
@@ -23,22 +23,22 @@ com.idilia.Word = function( originalText, lemma, genre, description, thumbnail, 
 			return this.sense.schemaOrgT[0];
 		}
 		return null;
-	}
+	};
 	
 	this.getExtRefs = function() {
 		if ( this.sense && this.sense.extRefs ) {
 			return this.sense.extRefs;
 		}
 		return null;
-	}
-}
+	};
+};
 
 com.idilia.Link = function() {
 	this.href = null;
 	this.title = null;
 	this.hasSchemaOrgT = false;
 	this.target = "_blank";
-}
+};
 
 com.idilia.MenuItem = function() {
 	this.lemma = "";
@@ -46,7 +46,7 @@ com.idilia.MenuItem = function() {
 	this.description = "unknown sense";
 	this.thumbnail = "";	
 	this.sense = null;
-}
+};
 
 com.idilia.Menu = function(menu) {
 	
@@ -60,7 +60,7 @@ com.idilia.Menu = function(menu) {
 	// given a url, tries to find corresponding sense in the menu
 	this.getSenseFromUrl = function ( url ) {					
 		if ( ! this.menu || ! this.menu.senses ) {
-			return null
+			return null;
 		}
 		
 		var maxSenses = this.menu.senses.length;
@@ -71,15 +71,15 @@ com.idilia.Menu = function(menu) {
 				var maxExtRefs = sense.extRefs.length;
 				var j = 0;
 				for ( ; j < maxExtRefs; j = j + 1 ) {
-					// because of trailing / on ref test with indexOf
-					if ( url.indexOf( sense.extRefs[j].url ) != -1 )
+					// remove trailing /
+					if ( url.replace(/\/$/, "") === sense.extRefs[j].url.replace(/\/$/, "") )
 						return sense;
 				}
 			}
 		}
 		
 		return null;
-	} 
+	};
 	
 	// parses a menu dom item
 	this.parseDomItem = function( item ) {		
@@ -104,19 +104,19 @@ com.idilia.Menu = function(menu) {
 		}
 		
 		return menuItem;
-	}
+	};
 	
 	// get first menu item - most frequent sense
 	this.getFirstMenuItem = function() {		
 		var item = $( "li[data-fsk-idx]", this.menuHTML ).first();		
 		return this.parseDomItem( item );
-	}
+	};
 	
 	// get menu item given an index
 	this.getMenuItemFromIndex = function( idx ) {	
 		var item = $( "li[data-fsk-idx='" + idx + "']", this.menuHTML ).first();
 		return this.parseDomItem( item );
-	}			
+	};			
 	
 	// get menu item given a url
 	this.getMenuItemFromUrl = function( url ) {
@@ -125,14 +125,14 @@ com.idilia.Menu = function(menu) {
 			return this.getMenuItemFromIndex( sense.idx );
 		}
 		return new com.idilia.MenuItem();
-	}	
-}
+	};	
+};
 
 /*****************************************************************************
  * View
  *****************************************************************************/
 
-com.idilia.buildWordView = function( word, menu, parentDivWidth, parentIFrameWidth ) {
+com.idilia.buildWordView = function( word, menu ) {
 	if ( word.thumbnail !== "" ) {
 		$( "#slc-word-info > span img" ).attr( "src", word.thumbnail );
 		$( "#slc-word-info  > span img" ).show();
@@ -158,10 +158,8 @@ com.idilia.buildWordView = function( word, menu, parentDivWidth, parentIFrameWid
 	
 	// Word change meaning button
     $( "#slc-sense-menu" ).hide();        
-	$( "#slc-edit-sense" ).show();
-    top.document.getElementById( top.window.slc_dialog.id ).style.width = parentDivWidth;
-    top.document.getElementById( top.window.slc_dialog.iframeElement.id ).style.width = parentIFrameWidth;
-}
+	$( "#slc-edit-sense" ).show();	
+};
 
 com.idilia.buildMenuView = function( word, menu ) {	
 	if ( menu.menuHTML ) {
@@ -172,13 +170,13 @@ com.idilia.buildMenuView = function( word, menu ) {
 		$( "#slc-edit-sense" ).attr( "disabled", true );
 		$( "#slc-edit-sense" ).attr( "title", "No other sense available.");
 	}	        
-}
+};
 
 com.idilia.buildSelectView = function( word, menu ) {
 	// link
 	var url = "";
 	if ( word.link && word.link.href ) {
-		url = word.link.href				
+		url = word.link.href;				
 	} else if ( extRefs = word.getExtRefs() ) {
 		url = extRefs[0].url;	 
 	} 
@@ -253,32 +251,32 @@ com.idilia.buildSelectView = function( word, menu ) {
         $( "#slc-mapping-schema" ).prop( "disabled", false );
         $( "#slc-mapping-schema" ).attr( "title", "Schema.org markup available for this text." );
     }    
-}
+};
 
-com.idilia.buildView = function( word, menu, parentDivWidth, parentIFrameWidth ) {	
-	com.idilia.buildWordView( word, menu, parentDivWidth, parentIFrameWidth );
+com.idilia.buildView = function( word, menu ) {
+	com.idilia.buildWordView( word, menu );
 	com.idilia.buildMenuView( word, menu );
 	com.idilia.buildSelectView( word, menu );		
-}
+};
 
 /*****************************************************************************
  * Main + Event handlers
  *****************************************************************************/
 $( document ).ready(function() {
-	
-	// store original width
-    var parentDivWidth = top.document
-    	.getElementById( top.window.slc_dialog.id ).style.width;
-    var parentIFrameWidth = top.document
-    	.getElementById( top.window.slc_dialog.iframeElement.id ).style.width;
 
     // getting information from tinymce editor
-    var tinymce = top.tinymce
-    var editor = top.tinymce.activeEditor;
-    var params = editor.windowManager.params;   
+    var tinymce = top.tinymce;
+    var editor = tinymce.activeEditor;
+    var params;
+    if (top.tinymce.majorVersion < 4) {
+    	params = editor.windowManager.params;   
+    } else {
+    	params = editor.windowManager.getParams();
+    }
     
-    // restore selection (for IE)
-    editor.selection.moveToBookmark( params.editorCursorPosition );
+    if ( tinymce.isIE ) {	
+    	editor.selection.moveToBookmark( params.editorCursorPosition );
+    }
     
     var anchor = editor.selection.getStart();    
     var text = editor.selection.getContent();    
@@ -318,7 +316,7 @@ $( document ).ready(function() {
     		menuItem.sense, 
     		link );
     
-    com.idilia.buildView( word, menu, parentDivWidth, parentIFrameWidth );    
+    com.idilia.buildView( word, menu );    
     
     var closeDialog = function() {
         top.tinymce.activeEditor.windowManager.close( window );
@@ -381,7 +379,7 @@ $( document ).ready(function() {
     			menuItem.thumbnail, 
     			menuItem.sense);
     
-    	com.idilia.buildWordView( word, menu, parentDivWidth, parentIFrameWidth );        	
+    	com.idilia.buildWordView( word, menu );        	
     	com.idilia.buildSelectView( word, menu );        
     };         
     
@@ -390,7 +388,7 @@ $( document ).ready(function() {
     	$( "#slc-title-div" ).toggle(view);
     	$( "#slc-schema-div" ).toggle(view);
     	$( "#slc-new-tab-div" ).toggle(view);
-    }
+    };
     
     var addLink = function( forceSchema ) {
     	
@@ -420,45 +418,31 @@ $( document ).ready(function() {
 	        		$( "#slc-mapping-title" ).val(),
 	        		document.getElementById( "slc-mapping-new-tab" ).checked );
 	
-	        if ( anchor && anchor.nodeName == "A" ) {
-	        	editor.dom.setOuterHTML( anchor, htmlLink );
-	        } else {
-	        	
-	            // restore selection (for IE)
-	            editor.selection.moveToBookmark( params.editorCursorPosition );	        	
+	        if ( tinymce.isIE ) {
+	        	editor.selection.moveToBookmark( params.editorCursorPosition );
+	        }
+	        
+	        if ( anchor && anchor.nodeName == "A" ) {	        		  
+	        	editor.dom.setOuterHTML( anchor, htmlLink );	        	
+	        } else {	        		        	
 	        	editor.selection.setContent( htmlLink );
 	        }
 	    }
-	    top.slcInitButtons();
+	    top.slcUpdateButtonsState();
 	    closeDialog();
-	}
+	};
        
     // ***************
     // Event handlers
     // ***************
     $( "#slc-mapping-link-view" ).click(function() {
     	if ( $( "#slc-mapping-link" ).val() != "" ) {
-    		window.slc_view = editor.windowManager.open({
-    		    file : $( "#slc-mapping-link" ).val(),
-    		    title : "SEO Link Creator - View",
-    		    width : 800,
-    		    height : 600,
-    		    inline : false,
-    		});
+    		window.open( $( "#slc-mapping-link" ).val(), "", "width=800,height=600,scrollbars=auto,menubar=no,status=no,titlebar=no,toolbar=no,location=no" );
     	}
     });
     
     $( "#slc-edit-sense" ).click(function( event ) {        
-        
-    	// depends on number of sense categories in this menu (+ 1 for other sense)
-    	var AVG_MENU_WIDTH = 105;
-    	var neededDivWidth = ( $( ".subHdr" ).length + 1 ) * AVG_MENU_WIDTH;    	
-    	if ( neededDivWidth > $( window ).width() ) {
-    		var neededIFrameWidth = neededDivWidth - 10;    	    
-    		top.document.getElementById( top.window.slc_dialog.id ).style.width = neededDivWidth + "px";
-    		top.document.getElementById( top.window.slc_dialog.iframeElement.id ).style.width = neededIFrameWidth + "px";
-    	}
-        
+                
         $( "#slc-edit-sense" ).hide();
         $( "#slc-sense-menu" ).show();
                 
@@ -474,7 +458,7 @@ $( document ).ready(function() {
         if ( anchor && anchor.nodeName == "A" ) {
             editor.dom.setOuterHTML( anchor, anchor.innerHTML );
         }
-        top.slcInitButtons();
+        top.slcUpdateButtonsState();
         closeDialog();
     });
     
@@ -512,7 +496,7 @@ $( document ).ready(function() {
         $( "ul", $( this ).parent() ).hide();
         
         // remove menu background highlighter
-        $('ul.menu-w').first().parent().find('a').first().css("background-color", "")
+        $('ul.menu-w').first().parent().find('a').first().css("background-color", "");
         
         $( this ).css( "background-color", "#CCC" );
         $( 'ul', this ).fadeIn();
@@ -537,7 +521,7 @@ $( document ).ready(function() {
     
     $('html').click(function() {    
     	if ( $( "#slc-sense-menu" ).is( ":visible" ) ) {
-    		com.idilia.buildWordView( word, menu, parentDivWidth, parentIFrameWidth );
+    		com.idilia.buildWordView( word, menu );
     	}
     });
     
@@ -546,7 +530,7 @@ $( document ).ready(function() {
      */
     $(document).keyup(function(e) {
     	if (e.keyCode == 27) {
-    		com.idilia.buildWordView( word, menu, parentDivWidth, parentIFrameWidth );
+    		com.idilia.buildWordView( word, menu );
     	}   // esc
     });
 
@@ -561,4 +545,4 @@ $( document ).ready(function() {
     	event.stopPropagation(); 
     	updateFromIdx( event.currentTarget.getAttribute( "data-fsk-idx" ) );
     });    
-})
+});

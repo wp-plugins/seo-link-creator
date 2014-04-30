@@ -4,8 +4,8 @@ Donate link: http://www.idilia.com/
 Tags: links,seo,schema.org,schema,microdata,html5,markup,wikipedia,google
 maps,facebook,twitter,map
 Requires at least: 3.0
-Tested up to: 3.8
-Stable tag: 1.0
+Tested up to: 3.9
+Stable tag: 1.0.1
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -71,9 +71,10 @@ To add the capability to add multiple links inside a block of text:
 
 1. New icons in visual editor
 2. Manually adding link
-3. Automatically adding links
-4. Selecting another meaning
-5. Control panel
+3. Selecting a paragraph for automatic link addition 
+4. Automatically adding links
+5. Selecting another meaning
+6. Plugin settings
 
 == Frequently Asked Questions ==
 
@@ -119,8 +120,12 @@ that someone will bounce off your page because off topic.
 
 == Changelog ==
 
+= 1.0.1 =
+* Bug Fix: fixed WordPress 3.9 compatibility issues
+* Bug Fix: fixed IE 9 compatibility issues
+
 = 1.0 =
-* 2014-04-15. Initial release
+* Initial release
 
 == Upgrade Notice == 
 

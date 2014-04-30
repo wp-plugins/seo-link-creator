@@ -23,9 +23,8 @@ function getRemainingTime( done, total, time ) {
 window.onload = function() {
   var tinymce = top.tinymce;
   var editor = top.tinymce.activeEditor;
-  var params = editor.windowManager.params;
-  var nbWords = params.nbWords;
-	
+  var params = top.slcCompatibleGetParams();  
+  var nbWords = params.nbWords;	
   if ( nbWords ) {
       document.getElementById( "slc-progress-bar-container" ).style.display = "block";
       var nbProcessedWords = 0;

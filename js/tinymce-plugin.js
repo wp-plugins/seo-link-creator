@@ -6,30 +6,86 @@ com = window.com || {};
 com.idilia = window.com.idilia || {};
 com.idilia.apps = window.com.idilia.apps || {};
 
-var POPUP_WIDTH = 480;
+var POPUP_WIDTH = 720;
 var POPUP_HEIGHT = 420;
-var POPUP_HEIGHT_SMALL = 75;
+var POPUP_HEIGHT_SMALL = 85;
 var PLUGIN_TITLE = "SEO Link Creator";
 var TAG_SINGLE_WORD = "Manual Link Addition";
 var TAG_ALL_WORDS = "Automatic Links Addition";
 
 var xhr = null;
 
-// To be used from iframe opened by windowManager.open
-function closeDialog() {
-	tinymce.activeEditor.windowManager
-	        .close( document.getElementById( 
-	        		window.slc_dialog.iframeElement.id ).contentWindow );
+/** 
+ * @returns 3.x/4.x TinyMCE compatible windowManager params
+ */
+function slcCompatibleGetParams() {
+	var params;
+	if (tinymce.majorVersion < 4) {
+		params = tinymce.activeEditor.windowManager.params;
+	} else {
+		params = tinymce.activeEditor.windowManager.getParams();
+	}	
+	return params;
 }
 
-function slcInitButtons() {
-	tinymce.activeEditor.controlManager.get( 'button_slc_tag_all_words' )
-	        .setDisabled( true );
-	tinymce.activeEditor.controlManager.get( 'button_slc_tag_single_word' )
-	        .setDisabled( true );
+/**
+ * 3.x/4.x TinyMCE compatible function to disable an item (button) 
+ * @param name Button Name
+ * @param state 
+ */
+function slcCompatibleSetDisabled( name, state ) {
+	var cm = tinymce.activeEditor.controlManager;
+	if ( tinymce.majorVersion < 4 ) {
+		cm.get( name ).setDisabled( state );
+	} else {
+		cm.setDisabled( name, state );
+	}
 }
 
-// sends user text to server to get tagging info
+/**
+ * 3.x/4.x TinyMCE compatible function to activate an item (button)
+ * @param name Button Name
+ * @param state 
+ */
+function slcCompatibleSetActive( name, state) {
+	var cm = tinymce.activeEditor.controlManager;
+	if ( tinymce.majorVersion < 4 ) {
+		cm.get( name ).setActive( state );
+	} else {
+		cm.setActive( name, state );
+	}
+}
+
+/**
+ * 3.x/4.x TinyMCE compatible function to activate an item (button)
+ * Used from iframe opened by windowManager.open
+ */
+function slcCompatibleCloseDialog() {
+	if (tinymce.majorVersion < 4) {
+		tinymce.activeEditor.windowManager
+		        .close( document.getElementById( 
+		        		window.slc_dialog.iframeElement.id ).contentWindow );
+	} else {
+		tinymce.activeEditor.windowManager.close();
+	}
+}
+
+/**
+ * After insertion/removal command reinitialize SEO Link buttons
+ */
+function slcInitButtons() {	
+	slcCompatibleSetDisabled( 'button_slc_tag_all_words', true );		        
+	slcCompatibleSetDisabled( 'button_slc_tag_single_word', true );
+	slcCompatibleSetActive( 'button_slc_tag_single_word', false );	
+}
+
+/**
+ * Sends user single word to server to get tagging info
+ * @param ed
+ * @param editorCursorPosition
+ * @param pluginJsUrl
+ * @param text
+ */
 function ajaxTagSingleWord( ed, editorCursorPosition, pluginJsUrl, text ) {
 
 	var data = { 
@@ -39,7 +95,7 @@ function ajaxTagSingleWord( ed, editorCursorPosition, pluginJsUrl, text ) {
 
 	// ajaxurl is defined in the admin header and points to admin-ajax.php
 	jQuery.post( ajaxurl, data, function( response ) {
-		closeDialog();
+		slcCompatibleCloseDialog();
 		if ( response.success ) {
 			var menu = response["menu"];
 			confirmTagSingleWord( ed, editorCursorPosition, pluginJsUrl, menu );
@@ -49,7 +105,13 @@ function ajaxTagSingleWord( ed, editorCursorPosition, pluginJsUrl, text ) {
 	});
 }
 
-// sends user text to server to get tagging info
+/**
+ * Sends user text--more than one word--to server to get tagging info
+ * @param ed
+ * @param editorCursorPosition
+ * @param pluginJsUrl
+ * @param text
+ */
 function ajaxTagAllWords( ed, editorCursorPosition, pluginJsUrl, text ) {
 
 	var data = { 
@@ -65,7 +127,7 @@ function ajaxTagAllWords( ed, editorCursorPosition, pluginJsUrl, text ) {
 	
 	// ajaxurl is defined in the admin header and points to admin-ajax.php
 	xhr = jQuery.post( ajaxurl, data, function( response ) {
-		closeDialog();
+		slcCompatibleCloseDialog();
 		if ( response.success ) {
 			var newText = response["new_text"];
 			var nbAnchors = 0;
@@ -80,17 +142,31 @@ function ajaxTagAllWords( ed, editorCursorPosition, pluginJsUrl, text ) {
 	});
 }
 
-function confirmTallAllWords( ed, editorCursorPosition, pluginJsUrl, newText, nbNewLinks ) {
-	
+/**
+ * On coming back from server, inserts new text with links otherwise aler+t message
+ * @param ed
+ * @param editorCursorPosition
+ * @param pluginJsUrl
+ * @param newText
+ * @param nbNewLinks
+ */
+function confirmTallAllWords( ed, editorCursorPosition, pluginJsUrl, newText, nbNewLinks ) {	
 	if ( nbNewLinks == 0 ) {
 		ed.windowManager.alert( "No links found. Try manual link addition.");			
 	} else {									
-	    // restore selection (for IE)
-		tinymce.activeEditor.selection.moveToBookmark( editorCursorPosition );	
+	    if ( tinymce.isIE ) {		
+	    	tinymce.activeEditor.selection.moveToBookmark( editorCursorPosition );
+	    }
 		tinymce.activeEditor.selection.setContent( newText );
 	} 			
+	slcUpdateButtonsState();
 }
 
+/**
+ * @param ed
+ * @param pluginJsUrl
+ * @param errorMsg
+ */
 function displayError( ed, pluginJsUrl, errorMsg ) {
 	window.slc_dialog = ed.windowManager.open({
 		file : pluginJsUrl + "/../html/error.html",
@@ -101,18 +177,25 @@ function displayError( ed, pluginJsUrl, errorMsg ) {
 	}, { 
 		message : errorMsg
 	});
+	slcUpdateButtonsState();
 }
 
-// popup to edit/insert link with with tagging server info
+/**
+ * on coming back from server, popup to edit/insert link with with tagging info
+ * @param ed
+ * @param editorCursorPosition required for IE
+ * @param pluginJsUrl plugin url to enable referencing other urls 
+ * @param menu
+ */
 function confirmTagSingleWord( ed, editorCursorPosition, pluginJsUrl, menu ) {
 	var page = "../html/add-link.html";
-	var title = PLUGIN_TITLE + " - " + TAG_SINGLE_WORD
+	var title = PLUGIN_TITLE + " - " + TAG_SINGLE_WORD;
 	window.slc_dialog = ed.windowManager.open({
 		file : pluginJsUrl + "/" + page,
 		title : title,
 		width : POPUP_WIDTH,
 		height : POPUP_HEIGHT,
-		inline : true,
+		inline : true,		
 	}, { 
 		menu : menu,
 		pluginJsUrl: pluginJsUrl,
@@ -120,25 +203,65 @@ function confirmTagSingleWord( ed, editorCursorPosition, pluginJsUrl, menu ) {
 	});
 }
 
-// appends custom buttons with behavior to tinymce interface
+/**
+ * TinyMCE node changing handler: 
+ * - on click in the editor
+ * - on selection in the editor 
+ */
+function slcUpdateButtonsState() {
+	
+	var ed = tinymce.activeEditor;
+	var selectedText = ed.selection.getContent();
+    var isTextSelected = ! ed.selection.isCollapsed();
+    var nbWords = selectedText.split(" ").length; 
+
+    if ( nbWords > 1 && isTextSelected ) {
+    	
+        // we display the "link all" option only  when more than one word is selected
+    	slcCompatibleSetDisabled( 'button_slc_tag_all_words', ed.selection.isCollapsed() );
+    }
+    
+    slcCompatibleSetDisabled( 'button_slc_tag_single_word', ed.selection.isCollapsed() );
+    slcCompatibleSetActive( 'button_slc_tag_single_word', false );
+	
+	var SINGLE_WORD_MAX_WORDS = 12;
+	if ( nbWords > SINGLE_WORD_MAX_WORDS ) {
+		slcCompatibleSetDisabled( 'button_slc_tag_single_word', true );
+	}
+
+    if ( !isTextSelected ) {
+    	slcCompatibleSetDisabled( 'button_slc_tag_all_words', ed.selection.isCollapsed() );
+    }
+
+    if ( ed.dom.getParent( ed.selection.getStart() ).nodeName === "A" ) {                        
+    	slcCompatibleSetDisabled( 'button_slc_tag_single_word', false );
+    	slcCompatibleSetActive( 'button_slc_tag_single_word', true );
+    }
+}
+
+/*
+ * Appends custom buttons with behavior to tinymce interface
+ */ 
 ( function() {
 	
 	/* Register the buttons */
 	tinymce.create(			
         'tinymce.plugins.SEOLinkCreatorTinymcePlugin',        
         { 
-        	init : function( ed, pluginJsUrl ) {
+        	init : /**
+        	 * @param ed
+        	 * @param pluginJsUrl
+        	 */
+        	function( ed, pluginJsUrl ) {
         	
 	            /**
 				 * Adds HTML tag to selected content
-				 */
-        		ed.addButton( 'separator', {});
-	
+				 */        		
 	            ed.addButton( 'button_slc_tag_single_word', {
-	            	title : PLUGIN_TITLE + ' - ' + TAG_SINGLE_WORD,
-	            	image : pluginJsUrl + '/../images/magiclink.png',
-	            	cmd : 'button_slc_tag_single_word_cmd',
-	            	disabled : true
+	            	title    : PLUGIN_TITLE + ' - ' + TAG_SINGLE_WORD,
+	            	image    : pluginJsUrl + '/../images/magiclink-20x20.png',
+	            	cmd      : 'button_slc_tag_single_word_cmd',
+	            	disabled : true,
 	            });
 	
 	            ed.addCommand( 'button_slc_tag_single_word_cmd', function() {
@@ -156,19 +279,19 @@ function confirmTagSingleWord( ed, editorCursorPosition, pluginJsUrl, menu ) {
 	                ajaxTagSingleWord( ed, editorCursorPosition, pluginJsUrl, selectedText );
 	
 	                window.slc_dialog = ed.windowManager.open({
-		                file : pluginJsUrl + '/../html/loading-spinner.html',
-		                title : PLUGIN_TITLE + ' - ' + TAG_SINGLE_WORD,
-		                width : POPUP_WIDTH,
-		                height : POPUP_HEIGHT,
+		                file   : pluginJsUrl + '/../html/loading-spinner.html',
+		                title  : PLUGIN_TITLE + ' - ' + TAG_SINGLE_WORD,
+		                width  : POPUP_WIDTH,
+		                height : POPUP_HEIGHT,	
 		                inline : true,
 	                });
 	            });
 	
 	            ed.addButton( 'button_slc_tag_all_words', {
-	                title : PLUGIN_TITLE + ' - ' + TAG_ALL_WORDS,
-	                image : pluginJsUrl + '/../images/magiclinkall.png',
-	                cmd : 'button_slc_tag_all_words_cmd',
-	                disabled : true
+	                title    : PLUGIN_TITLE + ' - ' + TAG_ALL_WORDS,
+	                image    : pluginJsUrl + '/../images/magiclinkall-20x20.png',
+	                cmd      : 'button_slc_tag_all_words_cmd',
+	                disabled : true,
 	            });
 	            
 			    ed.addCommand( 'button_slc_tag_all_words_cmd', function() {
@@ -186,13 +309,14 @@ function confirmTagSingleWord( ed, editorCursorPosition, pluginJsUrl, menu ) {
 	                    title : PLUGIN_TITLE + ' - ' + TAG_ALL_WORDS,
 	                    width : POPUP_WIDTH,
 	                    height : POPUP_HEIGHT_SMALL,
-	                    inline : true
+	                    inline : true,
 	                },
 	                { 
 	                	nbWords : selectedText.split( /\s+/ ).length
 	                });
 	
 	                ed.windowManager.onClose.add( function() {
+	                	
 	                    // disables text replacement when canceling loading page
 	                    if ( typeof xhr !== undefined ) {
 	                        xhr.abort();
@@ -200,37 +324,16 @@ function confirmTagSingleWord( ed, editorCursorPosition, pluginJsUrl, menu ) {
 	                });
 	            });
 	
-                ed.onNodeChange.add( function( ed, cm, n ) {
-
-                    var selectedText = ed.selection.getContent();
-                    var isTextSelected = ! ed.selection.isCollapsed();
-                    var nbWords = selectedText.split(" ").length; 
-
-                    if ( nbWords > 1 && isTextSelected ) {
-                    	
-                        // we display the "link all" option only
-						// when more than one word is selected
-                        cm.get( 'button_slc_tag_all_words' )
-                                .setDisabled( ed.selection.isCollapsed() );
-                    }
-                    
-                	cm.get( 'button_slc_tag_single_word' )
-                			.setDisabled( ed.selection.isCollapsed() );
-                	
-                	var SINGLE_WORD_MAX_WORDS = 12;
-                	if ( nbWords > SINGLE_WORD_MAX_WORDS ) {
-                    	cm.get( 'button_slc_tag_single_word' ).setDisabled( true );
-                	}
-
-                    if ( !isTextSelected ) {
-                        cm.get( 'button_slc_tag_all_words' )
-                                .setDisabled( ed.selection.isCollapsed() );
-                    }
-
-                    if ( ed.dom.getParent( ed.selection.getStart() ).nodeName === "A" ) {                        
-                        cm.get( 'button_slc_tag_single_word' ).setDisabled( false );
-                    }
-                });
+			    // Handles editor click/selection events
+				if (tinymce.majorVersion < 4) {
+	                ed.onNodeChange.add( function() {
+	                	slcUpdateButtonsState();	                    
+	                });
+				} else {
+					ed.on('NodeChange', function( e ) {
+						slcUpdateButtonsState();	     
+	                });
+				} 
         	}
         });
 	

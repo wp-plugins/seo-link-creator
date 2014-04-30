@@ -6,7 +6,8 @@
 <link rel="stylesheet" href="../css/style.css" type="text/css" media="all">
 <script language="javascript" type="text/javascript">
 	window.onload = function() {
-		document.getElementById( "message" ).innerHTML = top.tinymce.activeEditor.windowManager.params.message;
+		var params  = top.slcCompatibleGetParams();		  
+		document.getElementById( "message" ).innerHTML = params.message;
 	}
 </script>
 </head>

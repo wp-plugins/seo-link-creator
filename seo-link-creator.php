@@ -76,16 +76,15 @@ function slc_section_help() {
 }
 
 function slc_section_manual() {
-	$imgLink = plugins_url( 'images/magiclink.png', __FILE__ );
+	$imgLink = plugins_url( 'images/magiclink-20x20.png', __FILE__ );
 	echo "<p>Select some text in Wordpress editor and lookup for this icon <img width='16px' style='margin-bottom:-3px' title='SEO Link Creator - Manual Link Addition' src='$imgLink'>.</p>";
 	echo '<p>No keys required.</p>';	
 }
 
 function slc_section_auto() {
-	$imgLink = plugins_url( 'images/magiclinkall.png', __FILE__ );
+	$imgLink = plugins_url( 'images/magiclinkall-20x20.png', __FILE__ );
 	echo "<p>Select some text in Wordpress editor and lookup for this icon <img width='16px' style='margin-bottom:-3px' title='SEO Link Creator - Automatic Links Addition' src='$imgLink'>.</p>";
-	echo '<p>Please enter your keys to enable <strong>Automatic Links Addition</strong>.</p>';
-	echo "<p>If you don't have keys yet, get some for free <a href='http://www.idilia.com/developer/my-projects/' target='_blank' title='Idilia WebSite'>here</a>.</p>";
+	echo "<p>Please enter your keys. If you don't have keys yet, get some for free <a href='http://www.idilia.com/developer/my-projects/' target='_blank' title='Idilia WebSite'>here</a>.</p>";
 }
 
 function slc_setting_public() {
@@ -314,7 +313,7 @@ function ajax_slc_tag_all_words() {
 /* Idilia API EndPoints */
 global $tagging_endpoint, $tagging_menu_endpoint, $list_domains_endpoint;
 $tagging_endpoint = 'https://api.idilia.com/1/text/tag.json';
-$tagging_menu_endpoint = 'https://api.idilia.com/1/TaggingMenu/menu.json';
+$tagging_menu_endpoint = 'https://api.idilia.com/1/SenseMenu/menu.json';
 $list_domains_endpoint = 'https://api.idilia.com/1/kb/mappings/api/domains/list.json';
 
 // external reference order: most important first

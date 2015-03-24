@@ -6,12 +6,13 @@ com = window.com || {};
 com.idilia = window.com.idilia || {};
 com.idilia.apps = window.com.idilia.apps || {};
 
-var POPUP_WIDTH = 720;
+var POPUP_WIDTH = 740;
 var POPUP_HEIGHT = 420;
 var POPUP_HEIGHT_SMALL = 85;
 var PLUGIN_TITLE = "SEO Link Creator";
 var TAG_SINGLE_WORD = "Manual Link Addition";
 var TAG_ALL_WORDS = "Automatic Links Addition";
+var SELECT_MEANING = "Select Meaning";
 
 var xhr = null;
 
@@ -60,13 +61,33 @@ function slcCompatibleSetActive( name, state) {
  * 3.x/4.x TinyMCE compatible function to activate an item (button)
  * Used from iframe opened by windowManager.open
  */
-function slcCompatibleCloseDialog() {
+function slcCompatibleCloseAddLinkDialog() {
 	if (tinymce.majorVersion < 4) {
 		tinymce.activeEditor.windowManager
 		        .close( document.getElementById( 
-		        		window.slc_dialog.iframeElement.id ).contentWindow );
+		        		window.slc_dialog_add_link.iframeElement.id ).contentWindow );		
 	} else {
 		tinymce.activeEditor.windowManager.close();
+	}
+}
+
+function slcCompatibleCloseTaggingMenuDialog() {	
+	if (tinymce.majorVersion < 4) {
+		tinymce.activeEditor.windowManager
+		        .close( document.getElementById( 
+		        		window.slc_dialog_tagging_menu.iframeElement.id ).contentWindow );		
+	} else {
+		tinymce.activeEditor.windowManager.windows[0].close();
+	}
+}
+
+function slcCompatibleCloseFirstAddLinkDialog() {	
+	if (tinymce.majorVersion < 4) {
+		tinymce.activeEditor.windowManager
+		        .close( document.getElementById( 
+		        		window.slc_dialog_add_link.iframeElement.id ).contentWindow );		
+	} else {
+		tinymce.activeEditor.windowManager.windows[0].close();
 	}
 }
 
@@ -95,13 +116,8 @@ function ajaxTagSingleWord( ed, editorCursorPosition, pluginJsUrl, text ) {
 
 	// ajaxurl is defined in the admin header and points to admin-ajax.php
 	jQuery.post( ajaxurl, data, function( response ) {
-		slcCompatibleCloseDialog();
-		if ( response.success ) {
-			var menu = response["menu"];
-			confirmTagSingleWord( ed, editorCursorPosition, pluginJsUrl, menu );
-		} else {
-			displayError( ed, pluginJsUrl, response.errorMsg );
-		}
+		slcCompatibleCloseAddLinkDialog();				
+		confirmTagSingleWord( ed, editorCursorPosition, pluginJsUrl, response );		
 	});
 }
 
@@ -127,7 +143,7 @@ function ajaxTagAllWords( ed, editorCursorPosition, pluginJsUrl, text ) {
 	
 	// ajaxurl is defined in the admin header and points to admin-ajax.php
 	xhr = jQuery.post( ajaxurl, data, function( response ) {
-		slcCompatibleCloseDialog();
+		slcCompatibleCloseAddLinkDialog();
 		if ( response.success ) {
 			var newText = response["new_text"];
 			var nbAnchors = 0;
@@ -168,7 +184,7 @@ function confirmTallAllWords( ed, editorCursorPosition, pluginJsUrl, newText, nb
  * @param errorMsg
  */
 function displayError( ed, pluginJsUrl, errorMsg ) {
-	window.slc_dialog = ed.windowManager.open({
+	window.slc_dialog_add_link = ed.windowManager.open({
 		file : pluginJsUrl + "/../html/error.html",
 		title : PLUGIN_TITLE,
 		width : POPUP_WIDTH,
@@ -181,16 +197,17 @@ function displayError( ed, pluginJsUrl, errorMsg ) {
 }
 
 /**
- * on coming back from server, popup to edit/insert link with with tagging info
+ * This is called when coming back from server. It popups 
+ * a dialog to edit/insert link with with tagging info
  * @param ed
  * @param editorCursorPosition required for IE
  * @param pluginJsUrl plugin url to enable referencing other urls 
  * @param menu
  */
-function confirmTagSingleWord( ed, editorCursorPosition, pluginJsUrl, menu ) {
+function confirmTagSingleWord( ed, editorCursorPosition, pluginJsUrl, menu, selectedSense ) {
 	var page = "../html/add-link.html";
 	var title = PLUGIN_TITLE + " - " + TAG_SINGLE_WORD;
-	window.slc_dialog = ed.windowManager.open({
+	window.slc_dialog_add_link = ed.windowManager.open({
 		file : pluginJsUrl + "/" + page,
 		title : title,
 		width : POPUP_WIDTH,
@@ -198,7 +215,32 @@ function confirmTagSingleWord( ed, editorCursorPosition, pluginJsUrl, menu ) {
 		inline : true,		
 	}, { 
 		menu : menu,
-		pluginJsUrl: pluginJsUrl,
+		selectedSense : selectedSense,
+		pluginJsUrl : pluginJsUrl,
+		editorCursorPosition : editorCursorPosition,
+	});
+}
+
+/**
+ * This is called when coming back from server. It popups 
+ * a dialog to edit/insert link with with tagging info
+ * @param ed
+ * @param editorCursorPosition required for IE
+ * @param pluginJsUrl plugin url to enable referencing other urls 
+ * @param menu
+ */
+function displayTaggingMenu( ed, editorCursorPosition, pluginJsUrl, menu  ) {	
+	var page = "../html/tagging-menu.html";
+	var title = PLUGIN_TITLE + " - " + SELECT_MEANING;
+	window.slc_dialog_tagging_menu = ed.windowManager.open({
+		file : pluginJsUrl + "/" + page,
+		title : title,
+		width : POPUP_WIDTH,
+		height : POPUP_HEIGHT,
+		inline : true,		
+	}, { 
+		menu : menu,
+		pluginJsUrl: pluginJsUrl,		
 		editorCursorPosition: editorCursorPosition,
 	});
 }
@@ -278,7 +320,8 @@ function slcUpdateButtonsState() {
 	
 	                ajaxTagSingleWord( ed, editorCursorPosition, pluginJsUrl, selectedText );
 	
-	                window.slc_dialog = ed.windowManager.open({
+	                // popups temporary loading dialog
+	                window.slc_dialog_add_link = ed.windowManager.open({
 		                file   : pluginJsUrl + '/../html/loading-spinner.html',
 		                title  : PLUGIN_TITLE + ' - ' + TAG_SINGLE_WORD,
 		                width  : POPUP_WIDTH,
@@ -304,7 +347,7 @@ function slcUpdateButtonsState() {
 	                ajaxTagAllWords( ed, editorCursorPosition, pluginJsUrl, selectedText );
 	                
 	                // This window will be later closed by ajaxTagAllWords success callback
-	                window.slc_dialog = ed.windowManager.open({
+	                window.slc_dialog_add_link = ed.windowManager.open({
 	                    file : pluginJsUrl + '/../html/loading.html',
 	                    title : PLUGIN_TITLE + ' - ' + TAG_ALL_WORDS,
 	                    width : POPUP_WIDTH,
@@ -330,7 +373,7 @@ function slcUpdateButtonsState() {
 	                	slcUpdateButtonsState();	                    
 	                });
 				} else {
-					ed.on('NodeChange', function( e ) {
+					ed.on( 'NodeChange', function( e ) {
 						slcUpdateButtonsState();	     
 	                });
 				} 

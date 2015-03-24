@@ -1,11 +1,39 @@
 <?php
 /*
  Plugin Name: SEO Link Creator
-Plugin URI: http://www.idilia.com/
-Description: SEO Link Creator inserts external links in posts and pages. Optionally adds schema.org markup on created links.
-Version: 1.0
-Author: Idilia
-Author URI: http://www.idilia.com/
+ Plugin URI: http://www.idilia.com/
+ Description: SEO Link Creator inserts external links in posts and pages. Optionally adds schema.org markup on created links.
+ Version: 1.1
+ Author: Idilia
+ Author URI: http://www.idilia.com/
+ 
+ How this works:
+ There are two main features, available through 2 icons within tinyMCE editor in wordpress:
+ 
+ 1) Manual Link Addition - do not uses word context to disambiguate
+	Wordpress: some text has been selected by the user (or mouse cursor within an html link) in tinyMCE editor (visual mode)
+	Wordpress: click on manual link addition icon (one arrow looking up right) 
+	tinymce-plugin.js: post an ajax request to wordpress php with selected text and pops up a loading dialog
+	php server code (this file) on receiving ajax request: 
+		- post a request to idilia KB server and gets back a sense menu for the selected text (most likely sense being the first of the menu).
+		- if selected text is not found in idilia KB server, tries wiki using selected text as link
+		- some manipulation on returned menu (external references user friendly renaming, ordering, etc.)
+		- returns menu
+	tinymce-plugin.js on receiving ajax response:
+		- closes loading dialog 
+		- opens a new dialog with add-link.html
+		- on click on change meaning a new dialog, tagging-menu.html is loaded in a new dialog
+		- on selecting a new sense the add-link.html dialog is closed and re-opened with new data
+		- on add/update link, the tinyMCE editor content is updated with link/schemaorgt, etc.
+	 	 
+ 2) Automatic Link Addition - uses context to determine senses
+	Wordpress: some text (actually more than 1 word) has been selected by the user in tinyMCE editor (visual mode)
+	Wordpress: click on manual link addition icon (one arrow looking up right)
+	tinymce-plugin.js: post an ajax request to wordpress php with selected text and pops up a loading dialog
+	php server code (this file) on receiving ajax request:
+	  - closes loading dialog 
+		- post a request to idilia KB server and gets back disambiguated and annotated text
+		- updates directly tinyMCE editor content with linked text. 
 */
 
 /***************************************************/
@@ -213,52 +241,38 @@ require_once("rest-helper.php");
 
 /**
  * Feature #1: tag a single word (or compound)
+ * This receives an ajax call from client with a single
+ * word to tag and returns json with embedded html for
+ * tagging. 
+ * 
  */
 function ajax_slc_tag_single_word() {
 	global $tagging_menu_endpoint;
 	$text = stripslashes( $_POST['text'] );
 
-	// initialization
-	$response = json_encode( array(
-			'success' => true,
-			'originalText' => $text,
-	));
-
-	// Goes to idilia kb api server to fetch most likely sense about user word
-	$tagging_menu_request = array(
-			'text'         => $text,
-			'senseSource'  => 'kb',
-			'menuPolicies' => array(
-					'senseCollapsing' => 'equivs',
-					'skInfo'          => array('extRefs','schemaOrgT'),
-					'senseFiltering'  => array('noDynamic','noExtRefs'),
-			),
-	);
-
+	$geturl = $tagging_menu_endpoint . "?text=" . urlencode($text) . "&template=image_v1&fskInfos=extRefs,schemaOrgT&filters=noDynamic,noExtRefs";
 	$tagging_menu_response = make_rest_call(
-			$tagging_menu_endpoint, json_encode( $tagging_menu_request ), 'POST', 'json',
-			'Content-Type: application/json; charset=UTF-8' );
-
-	if ( $tagging_menu_response['status'] != 200 ) {
-		$response = json_encode( array( 
-				'success'  => false,
-				'errorMsg'   => slc_get_error_message( $tagging_response['status'],  $tagging_response["errorMsg"] )));
-	} else {
+			$geturl, null, "GET", "json","");	
 		
-		if ( $tagging_menu_response['menu'] ) {
-			
-			// we found something in kb
-			$response = slc_get_response( $tagging_menu_response['menu'] );
-			
-		} else {
-			
-			// oops nothing found try wikipedia directly
-			$wikipedia_info = slc_get_wikipedia_info( $text );
-			if ( $wikipedia_info ) {
-				$response = slc_get_response( $wikipedia_info );
-			}								
-		}
-	}
+	
+ 	if ( $tagging_menu_response['status'] == 200 ) {
+ 		
+ 		// we found something in kb
+ 		$response = slc_get_response( $tagging_menu_response['menu'] );
+ 		
+ 		
+ 	} else if ( $tagging_menu_response['status'] == 404 ) {
+ 		
+		// Nothing found in Idilia's kb - try wikipedia directly
+ 		$wikipedia_info = slc_get_wikipedia_info( $text );
+ 		if ( $wikipedia_info ) {
+ 			$response = slc_get_response( $wikipedia_info );
+ 		}								 		
+ 	} else {
+ 		$response = json_encode( array(
+ 				'success'  => false,
+ 				'errorMsg'   => slc_get_error_message( $tagging_response['status'],  $tagging_response["errorMsg"] )));
+ 	}
 
 	// response output
 	header( 'Content-Type: application/json; charset=utf-8' );
@@ -268,7 +282,7 @@ function ajax_slc_tag_single_word() {
 }
 
 /**
- * Feature #2: tag a single word (or compound)
+ * Feature #2: tag multiple words
  */
 function ajax_slc_tag_all_words() {
 	global $tagging_endpoint;
@@ -313,7 +327,7 @@ function ajax_slc_tag_all_words() {
 /* Idilia API EndPoints */
 global $tagging_endpoint, $tagging_menu_endpoint, $list_domains_endpoint;
 $tagging_endpoint = 'https://api.idilia.com/1/text/tag.json';
-$tagging_menu_endpoint = 'https://api.idilia.com/1/SenseMenu/menu.json';
+$tagging_menu_endpoint = 'https://api.idilia.com/1/kb/sense_menu.json';
 $list_domains_endpoint = 'https://api.idilia.com/1/kb/mappings/api/domains/list.json';
 
 // external reference order: most important first
@@ -409,22 +423,21 @@ function get_ext_ref_catalog() {
 function slc_get_wikipedia_info($text) {
 	$adhoc_wikipedia_link = "http://en.wikipedia.org/wiki/"  . slc_form_wikipedia_url( $text );
 	if (slc_url_exists($adhoc_wikipedia_link)) {
-		$wikiMsg = 'see wikipedia link below.';
-		$word = array(
-				senses => array(array(
-						'idx'     => 0,
-						'extRefs' => array(array(
-								'dm'  => 'wikipedia',
-								'url' => $adhoc_wikipedia_link,
-						)))),
-				menuHTML => '<ul class="menu-n senseMenu" data-menu-id="0">' .
-				'<li class="subHdr"><a href="#">Frequent Senses</a>' .
-				'<ul class="menu-w"><li class="menuItem" data-fsk-idx="0" data-fsk="">' .
-				"<a href='#' title='$wikiMsg'><span><span class='fsDesc'><span><span class='prefix'>" .
-				"<span class='lemma'>$text</span>, <span class='pos'>wikipedia link</span></span>$wikiMsg</span></span></span></a></li>",
-		);
+		$wikiMsg = 'See wikipedia page. ';
+		return
+				'<div class="idl-sensemenu idl-tmplt-image_v1" data-off="0">' .
+					'<div class="idl-sensetiles">' . 
+						'<div class="idl-tile-container idl-tile-text idl-menu-sensecard idl-tmplt-menu_image_v1" data-fsk="wikipedia" data-extrefs="[{&quot;dm&quot;:&quot;wikipedia&quot;,&quot;url&quot;:&quot;' . $adhoc_wikipedia_link . '&quot;}]">' .
+							'<div class="idl-sensetile">' .
+								"<div class='idl-tile-sum'><h1>$text</h1></div>" .
+								"<div class='idl-def'>$wikiMsg</div>" .
+							'</div>' .
+					  '</div>' .
+					'</div>' .
+				'</div>' .
+			'</div>';		
 	}		
-	return $word;
+	return null;
 }
 
 /**
@@ -432,25 +445,26 @@ function slc_get_wikipedia_info($text) {
  * @param unknown_type $menu
  * @return string
  */
-function slc_get_response($menu) {
-	
-	// Translates domain name codes in human readable domain names
-	$max_senses = count( $menu['senses'] );
-	for ( $i = 0; $i < $max_senses; $i++ ) {
-		$max_ext_refs = count($menu['senses'][$i]['extRefs']);
-		for ( $j = 0; $j < $max_ext_refs; $j++ ) {
-			$menu['senses'][ $i ]['extRefs'][ $j ]['dmName'] =
-			slc_get_domain_name_label( $menu['senses'][ $i ]['extRefs'][ $j ]['dm'] );
+function slc_get_response($menu) {	
+
+	$menu = str_replace("src=\"http://","src=\"//",$menu);
+	$dom = new DOMDocument();		
+	@$dom->loadHTML($menu);	
+	$xpath = new DOMXpath($dom);	
+	$elements = $xpath->query("//*[@data-extrefs]");	
+	if (!is_null($elements)) {
+		foreach ($elements as $element) {				
+			$extRefsAttr = $element->getAttribute( "data-extrefs" );
+			$extRefs = json_decode( $extRefsAttr, true );			
+			foreach ( $extRefs as &$extRef ) {				
+				$extRef[ 'dmName' ] =	slc_get_domain_name_label( $extRef[ 'dm' ] );
+			}
+			usort($extRefs, 'slc_ext_ref_cmp' );
+			$element->setAttribute( "data-extrefs",  json_encode($extRefs));
 		}
-
-		// sort external references by predefined order
-		if ( $menu['senses'][ $i ]['extRefs'] ) {
-			usort( $menu['senses'][ $i ]['extRefs'], 'slc_ext_ref_cmp' );
-		}
-	}
-
-	$menu['menuHTML'] = str_replace( 'http://','https://', $menu['menuHTML'] );
-
+	}	
+	$menu = $dom->saveHTML();
+		
 	// encode & return
 	return json_encode( array(
 			'success'      => true,

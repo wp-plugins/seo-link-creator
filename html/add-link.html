@@ -3,52 +3,43 @@
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 <title>SEO Link Creator</title>
-<link   rel="stylesheet" href="../css/style.css" type="text/css" media="all">
+<link rel="stylesheet" href="../css/jquery_sense_menu.css"
+	type="text/css" media="all">
+<link rel="stylesheet" href="../css/style.css" type="text/css"
+	media="all">
 <script language="javascript" type="text/javascript"
 	src="//ajax.googleapis.com/ajax/libs/jquery/1.11.0/jquery.min.js"></script>
+<script language="javascript" type="text/javascript"
+	src="../js/jquery_sense_menu.min.js"></script>
+<script language="javascript" type="text/javascript"
+  src="../js/model.js"></script>
+<script language="javascript" type="text/javascript"
+  src="../js/view.js"></script>
 <script language="javascript" type="text/javascript"
 	src="../js/add-link.js"></script>
 </head>
 <body>
-	<div id="slc-edit-link">
-		<div id="slc-word">
-			<div id="slc-word-info">
-
-				<span> 
-					<span class="fsImg" style="margin-right: 13px;">
-						<img class="tbnail">
-					</span>
-					<span class="fsDesc"> 
-						<span> 
-							<span class="prefix">
-								<span class="lemma"></span>, <span class="pos"></span>
-							</span> 
-							<span class="description"></span>
-						</span> 						
-					</span>
-				</span> 
-			</div>
-			<div style="min-height:30px">
-				<div id="slc-edit-sense-div">
-						<input id="slc-edit-sense" type="button" title="Change Meaning" value="Change meaning ...">
-				</div>
-				<div id="slc-sense-menu" style="display: none;"></div>
-			</div>
-		</div>				
-		<div id="slc-link-selector">
-			<div id="slc-link-options">
-				<p class="slc-howto">Select destination URL</p>
+	<table style="width:100%">
+		<tr>
+			<td style="width: 39%; padding-left: 40px; vertical-align: top">
+				<p class="slc-howto">1 - Selected Meaning</p>
+				<div id="slc-selected-sense"></div> <input id="slc-edit-sense"
+				type="button" title="Change Meaning" value="Change meaning ...">
+			</td>
+			<td style="vertical-align: top">
+				<p class="slc-howto">2 - Select Destination URL</p>
 				<div class="slc-link-option">
 					<label class="slc-link-target"> <select id="slc-mappings"><option></option></select>
 					</label>
 				</div>
 				<div class="slc-link-option" id="slc-url-div">
-					<label> <span>URL</span> <input id="slc-mapping-link"
-						type="text"> <input id="slc-mapping-link-view" class="slc-img-button" type="image" title="View" alt="View">
+					<label> URL<br/> <input id="slc-mapping-link"
+						type="text"> <input id="slc-mapping-link-view"
+						class="slc-img-button" type="image" title="View" alt="View">
 					</label>
 				</div>
 				<div class="slc-link-option" id="slc-title-div">
-					<label> <span>Title</span> <input id="slc-mapping-title"
+					<label> Title<br/> <input id="slc-mapping-title"
 						type="text">
 					</label>
 				</div>
@@ -64,19 +55,20 @@
 						checked> Open link in a new window/tab
 					</label>
 				</div>
-			</div>
+			</td>
+		</tr>
+	</table>
+	<div class="slc-submit-box">
+		<div class="slc-link-submit">
+			<input type="button" class="slc-button" id="slc-unlink" name="unlink"
+				value="Unlink" style="display: none">&nbsp;&nbsp; <input
+				type="button" class="slc-button" id="slc-add-link" name="insert"
+				value="Add Link"> <input type="button" class="slc-button"
+				id="slc-add-schema" name="insert" value="Add Schema"
+				style="display: none">
 		</div>
-		<div class="slc-submit-box">
-			<div class="slc-link-submit">
-				<input type="button" class="slc-button" id="slc-unlink"
-					name="unlink" value="Unlink" style="display:none">&nbsp;&nbsp;
-				<input type="button" class="slc-button" id="slc-add-link"
-					name="insert" value="Add Link">
-				<input type="button" class="slc-button" id="slc-add-schema" name="insert" value="Add Schema" style="display:none">
-			</div>			
-			<div id="slc-link-cancel">
-				<a href="#" class="slc-submit-delete" id="slc-anchor-cancel">Cancel</a>
-			</div>
+		<div id="slc-link-cancel">
+			<a href="#" class="slc-submit-delete" id="slc-anchor-cancel">Cancel</a>
 		</div>
 	</div>
 </body>

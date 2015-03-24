@@ -43,6 +43,9 @@ function make_rest_call( $url, $params = null, $verb = 'GET', $format= 'json',
         throw new Exception( "failed to decode $curl_response as xml" );
       }
       return $r;
+      
+    default:
+    	return $r;
   }
   curl_close( $curl );
   return $curl_response;

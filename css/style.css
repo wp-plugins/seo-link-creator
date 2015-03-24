@@ -5,15 +5,7 @@ body {
 	font-family: "Open Sans", sans-serif;
 	color: #444;
 	line-height: 1.4em;
-}
-
-label span {
-	line-height: 1.4em;
 	font-size: 12px;
-	display: inline-block;
-	width: 55px;
-	text-align: right;
-	padding-right: 5px;
 }
 
 input[type="text"] {
@@ -21,7 +13,6 @@ input[type="text"] {
 	border-style: solid;
 	-webkit-border-radius: 4px;
 	border-radius: 4px;
-	font-size: 12px;
 	margin: 1px;
 	width: 360px;
 	margin-top: 5px;
@@ -33,17 +24,18 @@ input[type="text"] {
 	color: #333;
 }
 
-p {
-	font-size: 13px;
-	line-height: 1.5;
-}
-
 .wp_themeSkin .mceButtonDisabled .mceIcon {
 	opacity: 0.4 !important;
 }
 
-#slc-wait-msg {
-	font-size: 13px;
+
+.fa.fa-chevron-down::before {
+content: " \25BC";
+}
+.fa.fa-chevron-up::after {
+content: " \25B2";
+}
+#slc-wait-msg {	
 	color: #444;
 	margin-bottom: 3px;
 }
@@ -86,17 +78,10 @@ p {
   border: 1px solid;
 }
 
-.slc-link-target {
-	width: auto;
-	margin: 0 0 0 62px;
-	font-size: 11px;
-}
-
 .slc-howto {
 	color: #666;
-	font-style: italic;
+	font-size:16px;	
 }
-
 
 .slc-link-submit {
 	float: right;
@@ -184,7 +169,6 @@ p {
 	left: 0;
 	width: 100%;
 	padding-top: 10px;	
-	font-size: 12px;
 	overflow: auto;
 	height: 35px;
 }
@@ -196,130 +180,41 @@ p {
 
 #slc-word-info {
 	margin-top: 30px;
-	margin-left: 20px;
-	font-size: 12px;
+	margin-left: 20px;	
 	min-height: 40px;
 }
 
-/* tagging menu */
-.menuItem :hover {
-	background-color: #CCC;
+/* Puts a scroball within the popup content - excluding the submit button bottom right */
+#slc-sense-menu {
+  max-height: 360px;
+  overflow-y: auto;
 }
 
-.menu-n {
-	margin: 0px;
-	padding: 0px;
-	list-style: none;
-	font-size: 12px;
+/* 
+ * Sense Menu Customization 
+ */
+ 
+.idl-sensemenu.idl-grid .idl-tile-container {  
+  margin: 2px 10px 10px 2px;
 }
 
-.ui-menu-w {
-	list-style: none;
+.idl-sensesel .idl-sensetile {
+  outline-color: #2EA2CC !important;
 }
 
-ul.ui-menu-w a {
-	text-decoration: none;
-	color: inherit;
+.idl-sensemenu .idl-sensesel .idl-tile-sum {
+  background: none;
 }
 
-.senseMenu {
-	display: inline-block;
-	z-index: 1;
-	border: 1px solid #CCC;
-	border-radius: 5px;
-	background-color: #eee;
+/* Remove nav bar */
+.idl-navbar {
+	display: none;	
 }
 
-.menu-n li {
-	float: left;
-	width: 160px;
-	position: relative;	
+.idl-sensemenu {
+  background: none;   
 }
 
-.menu-n li a {
-	color: inherit;
-	display: block;
-	padding: 0px 8px;
-	text-decoration: none;
-}
-
-/* submenu */
-.menu-w {
-	width: 400px;
-	border: 1px solid #CCC;
-	margin-top: 2px;
-}
-
-.menu-n ul {
+.idl-tile-other {
 	display: none;
-	position: absolute;
-	margin-left: 0;
-	list-style: none;
-	padding: 0;
-	max-height: 280px;
-	overflow-y: auto;
-	overflow-x: hidden;
-	background-color: #eee;
-	z-index: 1;
-}
-
-.menu-n ul li {
-	width: 160px;
-	float: left;
-}
-
-.menu-w>li>a>span {
-	display: inline-block;
-	max-height: 4em;
-	overflow: hidden;	
-	margin-right: 10px;
-}
-
-.menu-n li,.menu-w li {
-	width: inherit !important;
-	padding: 2px !important;
-	list-style-type: none;
-}
-
-.ui-menu .ui-menu-icon {
-	display: none;
-}
-
-.fsImg {
-	float: left;
-	margin-right: 5px;
-}
-
-.tbnail {
-	vertical-align: middle;
-}
-
-.fsImg .tbnail {
-	width: 32px;
-	height: 32px;
-}
-
-.hdrImg {
-	margin-right: 2px;
-}
-
-.hdrImg .tbnail {
-	width: 16px;
-	height: 16px;
-}
-
-.prefix {
-	margin-right: 5px;
-}
-
-.prefix:after {
-	content: ": ";
-}
-
-.prefix .lemma {
-	font-weight: bold;
-}
-
-.prefix .pos {
-	font-style: italic;
 }

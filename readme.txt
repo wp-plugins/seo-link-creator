@@ -1,11 +1,11 @@
 === Plugin Name ===
 Contributors: idilia@wordpress.com
 Donate link: http://www.idilia.com/
-Tags: links,seo,schema.org,schema,microdata,html5,markup,wikipedia,google
+Tags: links,seo,schema.org,schema,microdata,html5,markup,wikipedia,google,semantic,sense,meaning
 maps,facebook,twitter,map
 Requires at least: 3.0
-Tested up to: 3.9
-Stable tag: 1.0.1
+Tested up to: 4.1.1
+Stable tag: 1.1
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -120,6 +120,9 @@ that someone will bounce off your page because off topic.
 
 == Changelog ==
 
+= 1.1 =
+* New Feature: Easier meaning selection through a more visual menu with "meaning tiles"
+* Bug Fix: fixed Wikipedia link not being offered when lemma unknown in Idilia Language Graph
 = 1.0.1 =
 * Bug Fix: fixed WordPress 3.9 compatibility issues
 * Bug Fix: fixed IE 9 compatibility issues
